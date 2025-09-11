@@ -84,8 +84,6 @@ jobs:
           if [ -n "$PACKAGES" ]; then
             sudo apt-get install -y $PACKAGES
           fi
-        env:
-          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
       - name: buildtools on macos
         if: startsWith(matrix.config.name, 'macos') && matrix.config.*.system_packages
         shell: bash
@@ -96,5 +94,9 @@ jobs:
       - name: build
         shell: bash
         run: |
-          cmake  -DBOOST_URL=${{matrix.config.boost_url}} -DZMQ_TAG=${{matrix.config.zmq_tag}} -S .github/workflows/cmake-superbuild  -B build
+          cmake  -DBOOST_URL=${{matrix.config.boost_url}} -DZMQ_TAG=${{matrix.config.zmq_tag}} -S .github/workflows/cmake-superbuild  -B build \
+            -DBoost_INCLUDE_DIR=${{steps.install-boost.outputs.BOOST_ROOT}}/include\
+            -DBoost_LIBRARY_DIRS=${{steps.install-boost.outputs.BOOST_ROOT}}/lib
           cmake --build build
+        env:
+          BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
