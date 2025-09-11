@@ -69,11 +69,14 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-      - name: Install Boost
-        uses: egor-tensin/build-boost@v1 # Or MarkusJx/install-boost@v1
+      - name: Install boost
+        uses: MarkusJx/install-boost@v2
+        id: install-boost
         with:
-          boost_version: 1.88.0 # Specify your desired Boost version
-          toolset: gcc # Or clang, msvc, etc.
+          # REQUIRED: Specify the required boost version
+          # A list of supported versions can be found here:
+          # https://github.com/MarkusJx/prebuilt-boost/blob/main/versions-manifest.json
+          boost_version: 1.88.0
       - name: buildtools on ubuntu
         if: startsWith(matrix.config.name, 'ubuntu')
         shell: bash
