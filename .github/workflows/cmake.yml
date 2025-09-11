@@ -66,6 +66,7 @@ jobs:
       CXX: ${{ matrix.config.cxx }}
       CTEST_OUTPUT_ON_FAILURE: 1
       PACKAGES: ${{ matrix.config.system_packages }}
+      BOOST_ROOT: ${{ steps.install-boost.outputs.BOOST_ROOT }}
 
     steps:
       - uses: actions/checkout@v4
