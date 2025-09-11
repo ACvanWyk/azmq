@@ -18,7 +18,7 @@ jobs:
             os: ubuntu-latest,
             boost_url: system,
             zmq_tag: system,
-            system_packages: "libboost-all-dev libzmq3-dev ",
+            system_packages: "libzmq3-dev ",
             cc: "gcc",
             cxx: "g++",
           }
