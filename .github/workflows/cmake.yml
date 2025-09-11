@@ -68,13 +68,14 @@ jobs:
       PACKAGES: ${{ matrix.config.system_packages }}
 
     steps:
-      - uses: actions/checkout@v3
-      - name: buildtools on ubuntu
-        if: startsWith(matrix.config.name, 'ubuntu')
+      - uses: actions/checkout@v4
+      - name: Install Boost
         uses: egor-tensin/build-boost@v1 # Or MarkusJx/install-boost@v1
         with:
           boost_version: 1.88.0 # Specify your desired Boost version
-          toolset: matrix.config.cc
+          toolset: gcc # Or clang, msvc, etc.
+      - name: buildtools on ubuntu
+        if: startsWith(matrix.config.name, 'ubuntu')
         shell: bash
         run: |
           if [ -n "$PACKAGES" ]; then
