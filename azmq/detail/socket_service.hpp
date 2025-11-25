@@ -93,7 +93,7 @@ namespace detail {
             void do_open(boost::asio::io_service & ios,
 #else
             void do_open(boost::asio::io_context & ios,
-#endif			 
+#endif
                          context_type & ctx,
                          int type,
                          bool optimize_single_threaded,
@@ -193,16 +193,22 @@ namespace detail {
 
         using core_access = azmq::detail::core_access<socket_service>;
 
-#ifdef AZMQ_DETAIL_USE_IO_SERVICE	  
-        explicit socket_service(boost::asio::io_service & ios)
-#else
-        explicit socket_service(boost::asio::io_service & ios)
-#endif
+        explicit socket_service(
+#if BOOST_VERSION >= 106600
+		boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+		boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+            & ios)
             : azmq::detail::service_base<socket_service>(ios)
             , ctx_(context_ops::get_context())
         { }
 
-        void shutdown_service() override {
+#if BOOST_VERSION >= 106600
+        void shutdown() override {
+#else // BOOST_VERSION >= 106600
+		void shutdown_service() override {
+#endif // BOOST_VERSION >= 106600
             ctx_.reset();
         }
 
@@ -688,12 +694,11 @@ namespace detail {
                     if (op->do_perform(impl->socket_)) {
                         impl->in_speculative_completion_ = true;
                         l.unlock();
-#ifdef AZMQ_DETAIL_USE_IO_SERVICE			
-                        get_io_service()
+#ifdef AZMQ_DETAIL_USE_IO_SERVICE
+						get_io_service().post(deferred_completion(impl, std::move(op)));
 #else
-                        get_io_context()
+						boost::asio::post(get_io_context(),deferred_completion(impl, std::move(op)));
 #endif
-                            .post(deferred_completion(impl, std::move(op)));
                         return;
                     }
                 }

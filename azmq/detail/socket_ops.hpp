@@ -15,7 +15,12 @@
 
 #include <boost/assert.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106600
+#include <boost/asio/io_context.hpp>
+#else // BOOST_VERSION >= 106600
 #include <boost/asio/io_service.hpp>
+#endif // BOOST_VERSION >= 106600
 #include <boost/asio/socket_base.hpp>
 #if ! defined BOOST_ASIO_WINDOWS
     #include <boost/asio/posix/stream_descriptor.hpp>
@@ -88,7 +93,13 @@ namespace detail {
             return socket_type(res);
         }
 
-        static stream_descriptor get_stream_descriptor(boost::asio::io_service & io_service,
+        static stream_descriptor get_stream_descriptor(
+#if BOOST_VERSION >= 106600
+			boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+			boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+            & io_service,
                                                        socket_type & socket,
                                                        boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(socket, "invalid socket");
@@ -115,7 +126,8 @@ namespace detail {
         static boost::system::error_code cancel_stream_descriptor(stream_descriptor & sd,
                                                                   boost::system::error_code & ec) {
             BOOST_ASSERT_MSG(sd, "invalid stream_descriptor");
-            return sd->cancel(ec);
+            sd->cancel(ec);
+			return ec;
         }
 
         static boost::system::error_code bind(socket_type & socket,
@@ -283,7 +295,7 @@ namespace detail {
             return res;
         }
 
-        static size_t receive(message & msg,
+		static size_t receive(message& msg,
                               socket_type & socket,
                               flags_type flags,
                               boost::system::error_code & ec) {
@@ -324,6 +336,29 @@ namespace detail {
                 ec = make_error_code(boost::system::errc::no_buffer_space);
             return res;
         }
+
+        template<typename MutableBuffer>
+		static auto receive(MutableBuffer const& buffer,
+			socket_type& socket,
+			flags_type flags,
+			boost::system::error_code& ec) ->
+			typename boost::disable_if<boost::has_range_const_iterator<MutableBuffer>, size_t>::type
+		{
+			message msg;
+
+			size_t res = receive(msg, socket, flags, ec);
+			if(ec)
+				return 0;
+
+			if(msg.buffer_copy(buffer) < res) {
+				ec = make_error_code(boost::system::errc::no_buffer_space);
+				return 0;
+			}
+
+			if(msg.more())
+				ec = make_error_code(boost::system::errc::no_buffer_space);
+			return res;
+		}
 
         static size_t receive_more(message_vector & vec,
                                    socket_type & socket,

@@ -12,7 +12,12 @@
 #include "socket.hpp"
 #include "detail/actor_service.hpp"
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106600
+#include <boost/asio/io_context.hpp>
+#else // BOOST_VERSION >= 106600
 #include <boost/asio/io_service.hpp>
+#endif // BOOST_VERSION >= 106600
 
 #include <functional>
 
@@ -59,7 +64,13 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
      *      signals in some other way.
      */
     template<typename Function, typename... Args>
-    socket spawn(boost::asio::io_service & peer, bool defer_start, Function && f, Args&&... args) {
+    socket spawn(
+#if BOOST_VERSION >= 106600
+		boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+		boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+        & peer, bool defer_start, Function && f, Args&&... args) {
         auto& t = boost::asio::use_service<detail::actor_service>(peer);
         return t.make_pipe(defer_start, std::bind(std::forward<Function>(f),
                                                   std::placeholders::_1,
@@ -67,7 +78,13 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
     }
 
     template<typename Function, typename... Args>
-    socket spawn(boost::asio::io_service & peer, Function && f, Args&&... args) {
+    socket spawn(
+#if BOOST_VERSION >= 106600
+		boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+		boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+        & peer, Function && f, Args&&... args) {
         auto& t = boost::asio::use_service<detail::actor_service>(peer);
         return t.make_pipe(false, std::bind(std::forward<Function>(f),
                                             std::placeholders::_1,

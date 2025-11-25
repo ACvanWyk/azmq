@@ -9,7 +9,12 @@
 #ifndef AZMQ_DETAIL_BASIC_IO_OBJECT_HPP__
 #define AZMQ_DETAIL_BASIC_IO_OBJECT_HPP__
 
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106600
+#include <boost/asio/io_context.hpp>
+#else // BOOST_VERSION >= 106600
 #include <boost/asio/io_service.hpp>
+#endif // BOOST_VERSION >= 106600
 #include <boost/asio/basic_io_object.hpp>
 
 namespace azmq {
@@ -41,7 +46,13 @@ namespace detail {
         friend class core_access<Service>;
 
     public:
-        basic_io_object(boost::asio::io_service& ios)
+		basic_io_object(
+#if BOOST_VERSION >= 106600
+        boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+        boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+				& ios)
             : boost::asio::basic_io_object<Service>(ios)
         { }
     };

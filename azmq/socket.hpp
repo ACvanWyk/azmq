@@ -18,7 +18,12 @@
 #include "detail/receive_op.hpp"
 
 #include <boost/asio/basic_io_object.hpp>
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106600
+#include <boost/asio/io_context.hpp>
+#else // BOOST_VERSION >= 106600
 #include <boost/asio/io_service.hpp>
+#endif // BOOST_VERSION >= 106600
 #include <boost/asio/buffer.hpp>
 #include <boost/system/error_code.hpp>
 
@@ -108,7 +113,13 @@ public:
      *      io_service.run() you may bypass the mutex by passing true for
      *      optimize_single_threaded.
      */
-    explicit socket(boost::asio::io_service& ios,
+    explicit socket(
+#if BOOST_VERSION >= 106600
+		boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+		boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+                    & ios,
                     int type,
                     bool optimize_single_threaded = false)
             : azmq::detail::basic_io_object<detail::socket_service>(ios) {
@@ -118,7 +129,13 @@ public:
     }
 
     socket(socket&& other)
-        : azmq::detail::basic_io_object<detail::socket_service>(other.get_io_service()) {
+        : azmq::detail::basic_io_object<detail::socket_service>(
+#if BOOST_VERSION >= 106600
+			other.get_executor().context()
+#else // BOOST_VERSION >= 106600
+			other.get_io_service()
+#endif // BOOST_VERSION >= 106600
+            ) {
         get_service().move_construct(get_implementation(),
                                      other.get_service(),
                                      other.get_implementation());
@@ -656,7 +673,13 @@ public:
         *  \param ec error_code to set on error
         *  \returns socket
     **/
-    socket monitor(boost::asio::io_service & ios,
+    socket monitor(
+#if BOOST_VERSION >= 106600
+		boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+		boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+        & ios,
                    int events,
                    boost::system::error_code & ec) {
         auto uri = get_service().monitor(get_implementation(), events, ec);
@@ -674,7 +697,13 @@ public:
         *  \param events int mask of events to publish to returned socket
         *  \returns socket
     **/
-    socket monitor(boost::asio::io_service & ios,
+    socket monitor(
+#if BOOST_VERSION >= 106600
+		boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+		boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+        & ios,
                    int events) {
         boost::system::error_code ec;
         auto res = monitor(ios, events, ec);
@@ -777,7 +806,13 @@ namespace detail {
         typedef socket Base;
 
     public:
-        specialized_socket(boost::asio::io_service & ios,
+        specialized_socket(
+#if BOOST_VERSION >= 106600
+			boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+			boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+            & ios,
                            bool optimize_single_threaded = false)
             : Base(ios, Type, optimize_single_threaded)
         {
