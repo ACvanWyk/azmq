@@ -12,7 +12,6 @@
 #include "../error.hpp"
 #include "../socket.hpp"
 #include "../option.hpp"
-#include "service_base.hpp"
 #include "socket_service.hpp"
 #include "config/thread.hpp"
 #include "config/mutex.hpp"
@@ -21,10 +20,15 @@
 
 #include <boost/version.hpp>
 #include <boost/assert.hpp>
+#if BOOST_VERSION >= 106600
+#include <boost/asio/io_context.hpp>
+#else // BOOST_VERSION >= 106600
+#include <boost/asio/io_service.hpp>
+#endif // BOOST_VERSION >= 106600
 #include <boost/asio/signal_set.hpp>
 #include <boost/container/flat_map.hpp>
 
-#if BOOST_VERSION < 107000
+#if BOOST_VERSION < 106600
 #   define AZMQ_DETAIL_USE_IO_SERVICE 1
 #endif
 
@@ -34,6 +38,7 @@
 #include <atomic>
 #include <sstream>
 #include <exception>
+
 
 namespace azmq {
 namespace detail {
@@ -50,7 +55,11 @@ namespace detail {
             : azmq::detail::service_base<actor_service>(ios)
         { }
 
+#if BOOST_VERSION >= 106600
+        void shutdown() override { }
+#else // BOOST_VERSION >= 106600
         void shutdown_service() override { }
+#endif // BOOST_VERSION >= 106600
 
         using is_alive = opt::boolean<static_cast<int>(opt::limits::lib_actor_min)>;
         using detached = opt::boolean<static_cast<int>(opt::limits::lib_actor_min) + 1>;
@@ -81,8 +90,11 @@ namespace detail {
     private:
         struct concept_ {
             using ptr = std::shared_ptr<concept_>;
-
+#if BOOST_VERSION >= 106600
+            boost::asio::io_context io_service_;
+#else // BOOST_VERSION >= 106600
             boost::asio::io_service io_service_;
+#endif // BOOST_VERSION >= 106600
             boost::asio::signal_set signals_;
             pair_socket socket_;
             thread_t thread_;
@@ -200,7 +212,13 @@ namespace detail {
                 , defer_start_(defer_start)
             { }
 
-            void on_install(boost::asio::io_service&, void*) {
+            void on_install(
+#if BOOST_VERSION >= 106600
+                boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+                boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+                &, void*) {
                 if (defer_start_) return;
                 defer_start_ = false;
                 concept_::run(p_);
