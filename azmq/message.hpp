@@ -107,7 +107,7 @@ AZMQ_V1_INLINE_NAMESPACE_BEGIN
 
             std::unique_ptr<D> d(new D(std::forward<Deleter>(deleter)));
             auto rc = zmq_msg_init_data(&msg_,
-                                        static_cast<void*>(buffer),
+                                        static_cast<void*>(buffer.data()),
                                         boost::asio::buffer_size(buffer),
                                         call_deleter, d.get());
             if (rc)
