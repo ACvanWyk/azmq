@@ -918,6 +918,11 @@ TEST_CASE("Async Operation Send/Receive with stackful coroutine", "[socket_ops]"
 #else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
 #endif // BOOST_VERSION >= 106600
+#if BOOST_VERSION >= 107400
+	boost::asio::strand<boost::asio::any_io_executor> strand{ios.get_executor()};
+#else
+	boost::asio::strand<boost::asio::executor> strand{ios.get_executor()};
+#endif
 
     azmq::socket sb(ios, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -929,12 +934,12 @@ TEST_CASE("Async Operation Send/Receive with stackful coroutine", "[socket_ops]"
     boost::optional<size_t> btb{};
 
     //send coroutine task
-    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
       btc = azmq::async_send(sc, snd_bufs, yield);
     });
 
     //receive coroutine task
-    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
       std::array<char, 5> ident;
       std::array<char, 2> a;
       std::array<char, 2> b;
@@ -962,6 +967,11 @@ TEST_CASE("Async Operation Send/Receive single message, stackful coroutine, one 
 #else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
 #endif // BOOST_VERSION >= 106600
+#if BOOST_VERSION >= 107400
+	boost::asio::strand<boost::asio::any_io_executor> strand{ios.get_executor()};
+#else
+	boost::asio::strand<boost::asio::executor> strand{ios.get_executor()};
+#endif
 
     azmq::socket sb(ios, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -970,13 +980,13 @@ TEST_CASE("Async Operation Send/Receive single message, stackful coroutine, one 
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     //send coroutine task
-    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
       auto const btc = azmq::async_send(sc, snd_bufs, yield);
       REQUIRE(btc == 4);
     });
 
     //receive coroutine task
-    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
       auto frame1 = azmq::message{};
       auto const btb1 = azmq::async_receive(sb, frame1, yield);
       REQUIRE(btb1 == 5);
