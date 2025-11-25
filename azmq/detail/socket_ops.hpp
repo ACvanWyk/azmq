@@ -295,6 +295,20 @@ namespace detail {
             return res;
         }
 
+        template<typename ConstBufferSequence>
+		static auto send(ConstBufferSequence const& buffer,
+			socket_type& socket,
+			flags_type flags,
+			boost::system::error_code& ec) ->
+			typename boost::disable_if<boost::has_range_const_iterator<ConstBufferSequence>, size_t>::type
+		{
+			auto f = flags;
+			size_t res = send(message(buffer), socket, f, ec);
+			if(ec)
+				return 0u;
+			return res;
+		}
+
 		static size_t receive(message& msg,
                               socket_type & socket,
                               flags_type flags,
