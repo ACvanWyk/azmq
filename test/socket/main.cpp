@@ -51,7 +51,11 @@ std::string subj(const char* name) {
 }
 
 TEST_CASE( "Set/Get options", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket s(ios, ZMQ_ROUTER);
 
@@ -72,7 +76,11 @@ TEST_CASE( "Set/Get options", "[socket]" ) {
 }
 
 TEST_CASE( "Send/Receive single buffer", "[socket]") {
+    #if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios, ZMQ_PAIR);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -92,7 +100,11 @@ TEST_CASE( "Send/Receive single buffer", "[socket]") {
 }
 
 TEST_CASE( "Send/Receive single message", "[socket]") {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios, ZMQ_PAIR);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -113,7 +125,11 @@ TEST_CASE( "Send/Receive single message", "[socket]") {
 }
 
 TEST_CASE( "Send/Receive synchronous", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -152,8 +168,13 @@ TEST_CASE( "Send/Receive synchronous", "[socket]" ) {
 }
 
 TEST_CASE( "Send/Receive async", "[socket_ops]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -202,7 +223,11 @@ TEST_CASE( "Async send/receive copies buffer refs", "[socket_ops]" ) {
 
     class Base {
     protected:
+#if BOOST_VERSION >= 106600
+        boost::asio::io_context ioservice;
+#else // BOOST_VERSION >= 106600
         boost::asio::io_service ioservice;
+#endif // BOOST_VERSION >= 106600
         azmq::pair_socket sock;
         boost::system::error_code error;
         size_t bytes = 0;
@@ -311,8 +336,14 @@ TEST_CASE( "Async send/receive copies buffer refs", "[socket_ops]" ) {
 }
 
 TEST_CASE( "Send/Receive async is_speculative", "[socket_ops]" ) {
+
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.set_option(azmq::socket::allow_speculative(true));
@@ -358,11 +389,19 @@ TEST_CASE( "Send/Receive async is_speculative", "[socket_ops]" ) {
 }
 
 TEST_CASE( "Send/Receive async threads", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
+#endif // BOOST_VERSION >= 106600
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
 
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
     azmq::socket sc(ios_c, ZMQ_DEALER);
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
@@ -407,8 +446,13 @@ TEST_CASE( "Send/Receive async threads", "[socket]" ) {
 }
 
 TEST_CASE( "Send/Receive message async", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -463,8 +507,13 @@ TEST_CASE( "Send/Receive message async", "[socket]" ) {
 }
 
 TEST_CASE( "Send/Receive message more async", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -542,7 +591,13 @@ struct monitor_handler {
     std::string role_;
     std::vector<event_t> events_;
 
-    monitor_handler(boost::asio::io_service & ios, azmq::socket& s, std::string role)
+    monitor_handler(
+#if BOOST_VERSION >= 106600
+        boost::asio::io_context 
+#else // BOOST_VERSION >= 106600
+        boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+        & ios, azmq::socket & s, std::string role)
         : socket_(s.monitor(ios, ZMQ_EVENT_ALL))
         , role_(std::move(role))
     { }
@@ -591,8 +646,14 @@ void bounce(azmq::socket & server, azmq::socket & client) {
 }
 
 TEST_CASE( "Socket Monitor", "[socket]" ) {
+    
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+    boost::asio::io_context ios_m;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
     boost::asio::io_service ios_m;
+#endif // BOOST_VERSION >= 106600
 
     using socket_ptr = std::unique_ptr<azmq::socket>;
     socket_ptr client(new azmq::socket(ios, ZMQ_DEALER));
@@ -651,7 +712,11 @@ TEST_CASE( "Socket Monitor", "[socket]" ) {
 
 TEST_CASE( "Attach Method", "[socket]" ) {
     using namespace boost::algorithm;
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
     azmq::dealer_socket s(ios);
 
     std::vector<std::string> elems;
@@ -661,7 +726,11 @@ TEST_CASE( "Attach Method", "[socket]" ) {
 }
 
 TEST_CASE( "Pub/Sub", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
     azmq::sub_socket subscriber(ios);
     subscriber.connect("tcp://127.0.0.1:5556");
     subscriber.set_option(azmq::socket::subscribe("FOO"));
@@ -708,8 +777,13 @@ struct state {
 };
 
 TEST_CASE( "Loopback", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind("tcp://127.0.0.1:5560");
@@ -735,7 +809,11 @@ TEST_CASE( "Loopback", "[socket]" ) {
 }
 
 TEST_CASE( "socket_service does not call pending completion handlers when destroyed", "[socket]" ) {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ioservice;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ioservice;
+#endif // BOOST_VERSION >= 106600
     azmq::socket socket(ioservice, ZMQ_ROUTER);
     socket.bind(subj(BOOST_CURRENT_FUNCTION));
     socket.async_receive([](boost::system::error_code const& ec, azmq::message & msg, size_t bytes_transferred) {
@@ -746,8 +824,13 @@ TEST_CASE( "socket_service does not call pending completion handlers when destro
 #if BOOST_VERSION >= 107000
 
 TEST_CASE("Async Operation Send/Receive with callback", "[socket_ops]") {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -794,8 +877,13 @@ TEST_CASE("Async Operation Send/Receive with callback", "[socket_ops]") {
 }
 
 TEST_CASE("Async Operation Send/Receive with future ", "[socket_ops]") {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios_b;
+    boost::asio::io_context ios_c;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios_b;
     boost::asio::io_service ios_c;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios_b, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -825,7 +913,11 @@ TEST_CASE("Async Operation Send/Receive with future ", "[socket_ops]") {
 }
 
 TEST_CASE("Async Operation Send/Receive with stackful coroutine", "[socket_ops]") {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -865,7 +957,11 @@ TEST_CASE("Async Operation Send/Receive with stackful coroutine", "[socket_ops]"
 }
 
 TEST_CASE("Async Operation Send/Receive single message, stackful coroutine, one message at a time", "[socket_ops]") {
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 
     azmq::socket sb(ios, ZMQ_ROUTER);
     sb.bind(subj(BOOST_CURRENT_FUNCTION));
@@ -905,7 +1001,11 @@ TEST_CASE("Async Operation Send/Receive single message, stackful coroutine, one 
 
 
 TEST_CASE("Async Operation Send/Receive single message, check thread safety", "[socket_ops]") {
-	boost::asio::io_service ios;
+#if BOOST_VERSION >= 106600
+    boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
+    boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 #if BOOST_VERSION >= 107400
 	boost::asio::strand<boost::asio::any_io_executor> strand{ios.get_executor()};
 #else

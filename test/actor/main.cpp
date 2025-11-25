@@ -10,7 +10,12 @@
 #include <azmq/util/scope_guard.hpp>
 
 #include <boost/asio/buffer.hpp>
-
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 106600
+#include <boost/asio/io_context.hpp>
+#else // BOOST_VERSION >= 106600
+#include <boost/asio/io_service.hpp>
+#endif // BOOST_VERSION >= 106600
 #include <array>
 #include <thread>
 #include <iostream>
@@ -42,7 +47,11 @@ TEST_CASE( "Async Send/Receive", "[actor]" ) {
             boost::asio::buffer(b)
         }};
 
+#if BOOST_VERSION >= 106600
+        boost::asio::io_context ios;
+#else // BOOST_VERSION >= 106600
         boost::asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
         auto s = azmq::actor::spawn(ios, [&](azmq::socket & ss) {
             ss.async_receive(rcv_bufs, [&](boost::system::error_code const& ec, size_t bytes_transferred) {
                 ecb = ec;
@@ -57,7 +66,11 @@ TEST_CASE( "Async Send/Receive", "[actor]" ) {
             btc = bytes_transferred;
         });
 
-        boost::asio::io_service::work w(ios);
+#if BOOST_VERSION >= 107400
+        auto work = boost::asio::make_work_guard(ios);
+#else // BOOST_VERSION >= 106600
+        boost::asio::io_service::work work(ios);
+#endif // BOOST_VERSION >= 106600
         ios.run();
     }
 

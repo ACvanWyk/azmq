@@ -1,7 +1,12 @@
 #include <azmq/actor.hpp>
 
+#include <boost/version.hpp>
 #include <boost/utility/string_ref.hpp>
+#if BOOST_VERSION >= 106600
+#include <boost/asio/io_context.hpp>
+#else // BOOST_VERSION >= 106600
 #include <boost/asio/io_service.hpp>
+#endif // BOOST_VERSION >= 106600
 #include <boost/asio/buffer.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <boost/asio/deadline_timer.hpp>
@@ -17,7 +22,13 @@ namespace pt = boost::posix_time;
 
 class server_t {
 public:
-    server_t(asio::io_service & ios)
+    server_t(
+#if BOOST_VERSION >= 106600
+        boost::asio::io_context
+#else // BOOST_VERSION >= 106600
+        boost::asio::io_service
+#endif // BOOST_VERSION >= 106600
+         & ios)
         : pimpl_(std::make_shared<impl>())
         , frontend_(azmq::actor::spawn(ios, run, pimpl_))
     { }
@@ -96,8 +107,12 @@ void schedule_ping(asio::deadline_timer & timer, server_t & server) {
     });
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv) {    
+#if BOOST_VERSION >= 106600
+    asio::io_context ios;
+#else // BOOST_VERSION >= 106600
     asio::io_service ios;
+#endif // BOOST_VERSION >= 106600
 
     std::cout << "Running...";
     std::cout.flush();
