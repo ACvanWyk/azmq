@@ -19,6 +19,7 @@
 #if BOOST_VERSION >= 107000
 #include <boost/asio/use_future.hpp>
 #include <boost/asio/spawn.hpp>
+#include <boost/asio/detached.hpp>
 #include <boost/optional.hpp>
 #if BOOST_VERSION >= 107400
 #include <boost/asio/any_io_executor.hpp>
@@ -929,12 +930,12 @@ TEST_CASE("Async Operation Send/Receive with stackful coroutine", "[socket_ops]"
     boost::optional<size_t> btb{};
 
     //send coroutine task
-    auto fut_send = boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
       btc = azmq::async_send(sc, snd_bufs, yield);
-    }, boost::asio::use_future);
+    }, boost::asio::detached);
 
     //receive coroutine task
-    auto fut_receive = boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
       std::array<char, 5> ident;
       std::array<char, 2> a;
       std::array<char, 2> b;
@@ -946,11 +947,9 @@ TEST_CASE("Async Operation Send/Receive with stackful coroutine", "[socket_ops]"
                                                              }};
 
       btb = azmq::async_receive(sb, rcv_bufs, yield);
-    }, boost::asio::use_future);
+    }, boost::asio::detached);
 
     ios.run();
-    fut_send.get();
-    fut_receive.get();
     REQUIRE(btb.has_value());
     REQUIRE(btb.value() == 9);
 
@@ -972,13 +971,13 @@ TEST_CASE("Async Operation Send/Receive single message, stackful coroutine, one 
     sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
     //send coroutine task
-    auto fut_send = boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
       auto const btc = azmq::async_send(sc, snd_bufs, yield);
       REQUIRE(btc == 4);
-    }, boost::asio::use_future);
+    }, boost::asio::detached);
 
     //receive coroutine task
-    auto fut_receive = boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
+    boost::asio::spawn(ios, [&](boost::asio::yield_context yield) {
       auto frame1 = azmq::message{};
       auto const btb1 = azmq::async_receive(sb, frame1, yield);
       REQUIRE(btb1 == 5);
@@ -996,11 +995,9 @@ TEST_CASE("Async Operation Send/Receive single message, stackful coroutine, one 
       REQUIRE(!frame3.more());
       REQUIRE(message_ref(snd_bufs.at(1)) == message_ref(frame3));
 
-    }, boost::asio::use_future);
+    }, boost::asio::detached);
 
     ios.run();
-    fut_send.get();
-    fut_receive.get();
 }
 
 
@@ -1023,17 +1020,17 @@ TEST_CASE("Async Operation Send/Receive single message, check thread safety", "[
 	sc.connect(subj(BOOST_CURRENT_FUNCTION));
 
 	//send coroutine task
-	auto fut_send = boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
+	boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
 		REQUIRE(strand.running_in_this_thread());
         boost::system::error_code ecc;
 		auto const btc = azmq::async_send(sc, snd_bufs, yield[ecc]);
 		REQUIRE(strand.running_in_this_thread());
         REQUIRE(!ecc);
 		REQUIRE(btc == 4);
-	}, boost::asio::use_future);
+	}, boost::asio::detached);
 
 	//receive coroutine task
-	auto fut_receive = boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
+	boost::asio::spawn(strand, [&](boost::asio::yield_context yield) {
 		std::array<char, 5> ident;
 		std::array<char, 2> a;
 		std::array<char, 2> b;
@@ -1052,11 +1049,9 @@ TEST_CASE("Async Operation Send/Receive single message, check thread safety", "[
 
 		REQUIRE(message_ref(snd_bufs.at(0)) == boost::string_ref(a.data(), 2));
 		REQUIRE(message_ref(snd_bufs.at(1)) == boost::string_ref(b.data(), 2));
-	}, boost::asio::use_future);
+	}, boost::asio::detached);
 
 	ios.run();
-    fut_send.get();
-    fut_receive.get();
 }
 
 #endif // BOOST_VERSION >= 107000
