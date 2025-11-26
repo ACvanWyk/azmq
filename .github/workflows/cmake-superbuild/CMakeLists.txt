@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.10)
 project(azmq-super-build)
 
 #options
@@ -23,12 +23,16 @@ endif ()
 
 include(ExternalProject)
 
-set(BOOST_177 "https://boostorg.jfrog.io/artifactory/main/release/1.77.0/source/boost_1_77_0.tar.bz2")
-set(BOOST_176 "https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.bz2")
-set(BOOST_174 "https://boostorg.jfrog.io/artifactory/main/release/1.74.0/source/boost_1_74_0.tar.bz2")
-set(BOOST_172 "https://boostorg.jfrog.io/artifactory/main/release/1.72.0/source/boost_1_72_0.tar.bz2")
-set(BOOST_170 "https://boostorg.jfrog.io/artifactory/main/release/1.70.0/source/boost_1_70_0.tar.bz2")
-set(BOOST_168 "https://boostorg.jfrog.io/artifactory/main/release/1.68.0/source/boost_1_68_0.tar.bz2")
+set(BOOST_189 "https://archives.boost.io/release/1.87.0/source/boost_1_89_0.tar.bz2")
+set(BOOST_187 "https://archives.boost.io/release/1.87.0/source/boost_1_87_0.tar.bz2")
+set(BOOST_186 "https://archives.boost.io/release/1.86.0/source/boost_1_86_0.tar.bz2")
+set(BOOST_184 "https://archives.boost.io/release/1.84.0/source/boost_1_84_0.tar.bz2")
+set(BOOST_177 "https://archives.boost.io/release/1.77.0/source/boost_1_77_0.tar.bz2")
+set(BOOST_176 "https://archives.boost.io/release/1.76.0/source/boost_1_76_0.tar.bz2")
+set(BOOST_174 "https://archives.boost.io/release/1.74.0/source/boost_1_74_0.tar.bz2")
+set(BOOST_172 "https://archives.boost.io/release/1.72.0/source/boost_1_72_0.tar.bz2")
+set(BOOST_170 "https://archives.boost.io/release/1.70.0/source/boost_1_70_0.tar.bz2")
+set(BOOST_168 "https://archives.boost.io/release/1.68.0/source/boost_1_68_0.tar.bz2")
 
 set(DEVROOT ${CMAKE_BINARY_DIR}/devroot)
 
@@ -76,13 +80,19 @@ if (NOT (BOOST_URL STREQUAL "system"))
         INSTALL_DIR ${DEVROOT}
         CONFIGURE_COMMAND ./bootstrap.sh --prefix=<INSTALL_DIR>
         BUILD_COMMAND ""
-        INSTALL_COMMAND ./b2 install --prefix=<INSTALL_DIR> -j${CPU_COUNT})
+        INSTALL_COMMAND ./b2 install --prefix=<INSTALL_DIR> -j${CPU_COUNT} --warnings-as-errors=off --without-python --without-math)
     list(APPEND LIBS boost)
 endif ()
+
+cmake_policy(GET CMP0167 _cmp0167_value)
+if(_cmp0167_value)
+  set(_policy_arg "-DCMAKE_POLICY_DEFAULT_CMP0167=${_cmp0167_value}")
+  message(STATUS " Setting superbuild CMP0167 to ${_cmp0167_value} ")
+endif()
 
 ExternalProject_Add(
     azmq
     DEPENDS ${LIBS}
-    CMAKE_ARGS ${CMAKE_ARGS} -D AZMQ_BUILD_TESTS=YES
+    CMAKE_ARGS ${CMAKE_ARGS} -D AZMQ_BUILD_TESTS=YES ${_policy_arg}
     SOURCE_DIR ${CMAKE_SOURCE_DIR}/../../..
     TEST_BEFORE_INSTALL YES)
